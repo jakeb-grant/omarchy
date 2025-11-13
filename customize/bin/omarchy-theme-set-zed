@@ -1,0 +1,94 @@
+#!/bin/bash
+#
+# omarchy-theme-set-zed
+# Updates Zed editor theme to match current Omarchy theme
+#
+# This script is designed to be called:
+# 1. Manually: omarchy-theme-set-zed
+# 2. From hooks: ~/.config/omarchy/hooks/theme-set
+# 3. When switching themes in Omarchy
+#
+
+SETTINGS_PATH="$HOME/.config/zed/settings.json"
+THEMES_DIR="${OMARCHY_ZED_THEMES_DIR:-$HOME/.local/share/omarchy-customize/themes-zed}"
+
+# Check if Zed is installed
+if ! command -v zed &> /dev/null; then
+    exit 0
+fi
+
+# Get current theme name from Omarchy
+if [ -f "$HOME/.config/omarchy/current/theme" ]; then
+    CURRENT_THEME=$(basename "$(readlink -f "$HOME/.config/omarchy/current/theme")")
+else
+    echo "⚠️  Could not determine current Omarchy theme"
+    exit 1
+fi
+
+# Look for Zed theme configuration
+ZED_THEME_CONFIG="$THEMES_DIR/$CURRENT_THEME.json"
+
+if [ ! -f "$ZED_THEME_CONFIG" ]; then
+    echo "⚠️  No Zed theme configuration found for: $CURRENT_THEME"
+    echo "    Expected: $ZED_THEME_CONFIG"
+    exit 0
+fi
+
+# Read theme configuration
+theme_name=$(jq -r '.name' "$ZED_THEME_CONFIG")
+extension=$(jq -r '.extension' "$ZED_THEME_CONFIG")
+
+if [ -z "$theme_name" ] || [ "$theme_name" = "null" ]; then
+    echo "⚠️  Invalid theme configuration in $ZED_THEME_CONFIG"
+    exit 1
+fi
+
+echo "Setting Zed theme to: $theme_name"
+
+# Install extension if specified and not already installed
+if [ -n "$extension" ] && [ "$extension" != "null" ]; then
+    if ! zed --list-extensions 2>/dev/null | grep -Fxq "$extension"; then
+        echo "  Installing Zed extension: $extension"
+        zed --install-extension "$extension" >/dev/null 2>&1 || {
+            echo "  ⚠️  Failed to install extension: $extension"
+            echo "  You may need to install it manually from Zed's extension panel"
+        }
+    fi
+fi
+
+# Create settings directory if it doesn't exist
+mkdir -p "$(dirname "$SETTINGS_PATH")"
+
+# Create settings file if it doesn't exist
+if [ ! -f "$SETTINGS_PATH" ]; then
+    cat > "$SETTINGS_PATH" << 'EOF'
+{
+  "theme": "One Dark"
+}
+EOF
+fi
+
+# Update theme in settings.json
+# Use jq to properly handle JSON
+if command -v jq &> /dev/null; then
+    # Create a temporary file
+    TMP_SETTINGS=$(mktemp)
+
+    # Update or add theme field
+    jq --arg theme "$theme_name" '.theme = $theme' "$SETTINGS_PATH" > "$TMP_SETTINGS"
+
+    # Move temp file to settings
+    mv "$TMP_SETTINGS" "$SETTINGS_PATH"
+
+    echo "✓ Zed theme updated to: $theme_name"
+else
+    # Fallback to sed if jq is not available
+    if grep -q '"theme"' "$SETTINGS_PATH"; then
+        sed -i "s/\"theme\"[[:space:]]*:[[:space:]]*\"[^\"]*\"/\"theme\": \"$theme_name\"/" "$SETTINGS_PATH"
+    else
+        # Add theme field after first {
+        sed -i "0,/{/s/{/{\n  \"theme\": \"$theme_name\",/" "$SETTINGS_PATH"
+    fi
+
+    echo "✓ Zed theme updated to: $theme_name"
+fi

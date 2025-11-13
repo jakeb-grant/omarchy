@@ -19,6 +19,7 @@ echo "  1. Remove Neovim packages (nvim, omarchy-nvim)"
 echo "  2. Install Zed editor"
 echo "  3. Set Zed as the default EDITOR"
 echo "  4. Update omarchy-launch-editor to support Zed"
+echo "  5. Integrate Zed with Omarchy theme system"
 echo
 echo "All original files will be backed up."
 echo
@@ -39,7 +40,7 @@ FAILED_STEPS=()
 
 # Step 1: Switch to Zed
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "STEP 1 of 3: Package Management"
+echo "STEP 1 of 4: Package Management"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 if bash "$SCRIPT_DIR/01-switch-to-zed.sh"; then
     echo "✓ Step 1 completed successfully"
@@ -53,7 +54,7 @@ echo
 
 # Step 2: Set default editor
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "STEP 2 of 3: Environment Configuration"
+echo "STEP 2 of 4: Environment Configuration"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 if bash "$SCRIPT_DIR/02-set-zed-default-editor.sh"; then
     echo "✓ Step 2 completed successfully"
@@ -67,13 +68,27 @@ echo
 
 # Step 3: Update launch script
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "STEP 3 of 3: Launch Editor Integration"
+echo "STEP 3 of 4: Launch Editor Integration"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 if bash "$SCRIPT_DIR/03-update-launch-editor.sh"; then
     echo "✓ Step 3 completed successfully"
 else
     FAILED_STEPS+=("Launch editor integration")
     echo "✗ Step 3 failed (see errors above)"
+fi
+
+echo
+echo
+
+# Step 4: Integrate Zed themes
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "STEP 4 of 4: Theme System Integration"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+if bash "$SCRIPT_DIR/04-integrate-zed-themes.sh"; then
+    echo "✓ Step 4 completed successfully"
+else
+    FAILED_STEPS+=("Theme system integration")
+    echo "✗ Step 4 failed (see errors above)"
 fi
 
 echo
@@ -110,5 +125,6 @@ echo "Customization Details:"
 echo "  • Neovim removed: nvim, omarchy-nvim"
 echo "  • Zed installed: $(which zed 2>/dev/null || echo 'not in PATH yet')"
 echo "  • Default EDITOR: zed"
+echo "  • Theme integration: Automatic sync with Omarchy themes"
 echo "  • Config files backed up with .backup extension"
 echo "═══════════════════════════════════════════════"

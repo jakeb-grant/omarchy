@@ -4,7 +4,7 @@ These scripts allow you to customize a vanilla Omarchy installation without main
 
 ## What These Scripts Do
 
-This customization replaces **Neovim** with **Zed** as the default editor in Omarchy.
+This customization replaces **Neovim** with **Zed** as the default editor in Omarchy, and integrates Zed with the Omarchy theme system for automatic theme synchronization.
 
 ### Changes Made:
 
@@ -22,6 +22,12 @@ This customization replaces **Neovim** with **Zed** as the default editor in Oma
    - Updates `omarchy-launch-editor` script
    - Ensures Zed launches as a GUI application
    - Falls back to Zed if `$EDITOR` is not found
+
+4. **Theme System Integration** (`04-integrate-zed-themes.sh`)
+   - Installs Zed theme configurations for all 12 Omarchy themes
+   - Sets up `omarchy-theme-set-zed` script for theme switching
+   - Configures Omarchy hook to automatically update Zed when themes change
+   - Applies current Omarchy theme to Zed
 
 ## Usage
 
@@ -50,6 +56,9 @@ bash 02-set-zed-default-editor.sh
 
 # Just update the launcher
 bash 03-update-launch-editor.sh
+
+# Just integrate themes
+bash 04-integrate-zed-themes.sh
 ```
 
 ## After Installation
@@ -65,6 +74,27 @@ Test the editor:
 ```bash
 omarchy-launch-editor
 ```
+
+## Theme Integration
+
+After running the customization, Zed will automatically sync with Omarchy's theme system:
+
+- **Automatic theme switching**: When you change your Omarchy theme, Zed updates automatically
+- **Manual theme update**: Run `omarchy-theme-set-zed` to apply the current theme
+- **Supported themes**: All 12 Omarchy themes have Zed configurations:
+  - Catppuccin (Mocha & Latte)
+  - Tokyo Night
+  - Gruvbox
+  - Nord
+  - Rose Pine
+  - Kanagawa
+  - Everforest
+  - Flexoki Light
+  - Matte Black
+  - Osaka Jade
+  - Ristretto
+
+The integration uses the Omarchy hooks system (`~/.config/omarchy/hooks/theme-set`) to trigger theme updates automatically.
 
 ## Backup Files
 
@@ -103,14 +133,15 @@ To revert back to Neovim:
 - These scripts are **idempotent** - safe to run multiple times
 - All original files are backed up before modification
 - The scripts will ask for confirmation before destructive operations
-- Zed will respect Omarchy's theme colors (though it doesn't use the theme files like VS Code does)
+- Zed theme integration uses Omarchy's native hook system for seamless synchronization
+- Theme configurations are stored in `~/.local/share/omarchy-customize/themes-zed/`
 
 ## Adding Your Own Customizations
 
 Follow this pattern for additional modifications:
 
-1. Create numbered scripts: `04-your-mod.sh`, `05-another-mod.sh`
-2. Make them executable: `chmod +x 04-your-mod.sh`
+1. Create numbered scripts: `05-your-mod.sh`, `06-another-mod.sh`
+2. Make them executable: `chmod +x 05-your-mod.sh`
 3. Add them to `customize-omarchy.sh` as additional steps
 4. Always backup original files before modification
 5. Use clear echo statements to show progress
