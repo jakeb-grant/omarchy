@@ -1,153 +1,362 @@
-# Omarchy Post-Install Customization Scripts
+# Omarchy Customization System
 
-These scripts allow you to customize a vanilla Omarchy installation without maintaining a full fork.
+A modular, extensible customization framework for Omarchy installations. Add, remove, and configure applications without maintaining a full fork.
 
-## What These Scripts Do
+## Quick Start
 
-This customization replaces **Neovim** with **Zed** as the default editor in Omarchy, and integrates Zed with the Omarchy theme system for automatic theme synchronization.
+### Interactive Menu (Recommended)
 
-### Changes Made:
+```bash
+cd customize
+bash customize.sh
+```
 
-1. **Package Management** (`01-switch-to-zed.sh`)
-   - Removes `nvim` and `omarchy-nvim` packages
-   - Installs `zed` editor
-   - Optionally removes Neovim configuration
+This launches an interactive menu where you can:
+- Browse available modules by category
+- Install/configure individual components
+- Run quick-install presets
+- Uninstall modules
 
-2. **Environment Configuration** (`02-set-zed-default-editor.sh`)
-   - Updates `~/.config/uwsm/default` to set `EDITOR=zed`
-   - Optionally adds to `~/.bashrc`
-   - Backs up original files
+### Quick Install: Zed Editor
 
-3. **Launch Integration** (`03-update-launch-editor.sh`)
-   - Updates `omarchy-launch-editor` script
-   - Ensures Zed launches as a GUI application
-   - Falls back to Zed if `$EDITOR` is not found
+Replace Neovim with Zed editor + full theme integration:
 
-4. **Theme System Integration** (`04-integrate-zed-themes.sh`)
-   - Installs Zed theme configurations for all 12 Omarchy themes
-   - Sets up `omarchy-theme-set-zed` script for theme switching
-   - Configures Omarchy hook to automatically update Zed when themes change
-   - Applies current Omarchy theme to Zed
+```bash
+cd customize
+bash customize.sh
+# Select: 4. Quick Install: Zed Editor (full setup)
+```
+
+Or manually:
+
+```bash
+cd modules/editors/zed
+bash install.sh
+bash configure.sh
+bash theme-integration.sh
+```
+
+## Structure
+
+```
+customize/
+├── customize.sh           # Interactive menu system
+├── lib/                   # Shared utilities
+│   ├── common.sh         # Common functions (logging, backups, etc.)
+│   ├── package-utils.sh  # Package management helpers
+│   └── theme-utils.sh    # Theme integration utilities
+├── modules/              # Customization modules
+│   ├── editors/
+│   │   ├── zed/         # Zed editor module
+│   │   │   ├── install.sh
+│   │   │   ├── configure.sh
+│   │   │   ├── theme-integration.sh
+│   │   │   ├── uninstall.sh
+│   │   │   ├── bin/     # Scripts
+│   │   │   ├── themes/  # Theme configs
+│   │   │   └── README.md
+│   │   └── neovim/      # Neovim uninstall module
+│   │       ├── uninstall.sh
+│   │       └── README.md
+│   ├── apps/            # Application modules (coming soon)
+│   └── system/          # System tweaks (coming soon)
+└── README.md            # This file
+```
+
+## Available Modules
+
+### Editors
+
+#### Zed Editor (`modules/editors/zed/`)
+
+Replace Neovim with Zed editor as the default, with full Omarchy theme integration.
+
+**Features:**
+- Removes Neovim packages
+- Installs Zed from AUR
+- Sets as default `EDITOR`
+- Updates `omarchy-launch-editor`
+- Automatic theme synchronization with Omarchy
+- Supports all 12 Omarchy themes
+
+**Usage:**
+```bash
+cd modules/editors/zed
+bash install.sh              # Install Zed, remove Neovim
+bash configure.sh            # Set as default editor
+bash theme-integration.sh    # Enable theme sync
+bash uninstall.sh           # Revert everything
+```
+
+See [modules/editors/zed/README.md](modules/editors/zed/README.md) for details.
+
+#### Neovim Uninstall (`modules/editors/neovim/`)
+
+Completely remove Neovim and all its configuration.
+
+**Usage:**
+```bash
+cd modules/editors/neovim
+bash uninstall.sh
+```
+
+## Creating New Modules
+
+Modules are self-contained directories with scripts and resources. Here's how to create one:
+
+### 1. Create Module Directory
+
+```bash
+mkdir -p modules/<category>/<name>
+```
+
+Example categories: `editors`, `apps`, `system`
+
+### 2. Create Module Scripts
+
+Each module can have any combination of:
+
+- `install.sh` - Install the application/feature
+- `configure.sh` - Configure settings
+- `theme-integration.sh` - Integrate with Omarchy themes
+- `uninstall.sh` - Remove everything
+- `README.md` - Documentation
+
+### 3. Use Shared Libraries
+
+All scripts should source the common libraries:
+
+```bash
+#!/bin/bash
+set -e
+
+# Get module directory
+MODULE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CUSTOMIZE_DIR="$(cd "$MODULE_DIR/../../.." && pwd)"
+
+# Source libraries
+source "$CUSTOMIZE_DIR/lib/common.sh"
+source "$CUSTOMIZE_DIR/lib/package-utils.sh"
+source "$CUSTOMIZE_DIR/lib/theme-utils.sh"
+
+print_header "Your Module Name"
+
+# Use library functions
+if command_exists your-app; then
+    print_success "App already installed"
+else
+    install_package "your-app"
+fi
+```
+
+### 4. Available Library Functions
+
+**`common.sh`:**
+- `print_header`, `print_success`, `print_error`, `print_warning`, `print_info`
+- `backup_file`, `ensure_dir`, `install_script`
+- `command_exists`, `package_installed`, `is_omarchy`
+- `ask_yes_no`
+
+**`package-utils.sh`:**
+- `install_package`, `remove_package`
+- `install_packages`, `remove_packages`
+
+**`theme-utils.sh`:**
+- `get_current_theme`
+- `install_theme_hook`, `remove_theme_hook`
+- `update_json_setting`
+
+### 5. Module README Template
+
+```markdown
+# Module Name
+
+Brief description of what this module does.
 
 ## Usage
 
-### Quick Start (Run All Changes)
+\`\`\`bash
+bash install.sh
+bash configure.sh
+\`\`\`
 
-```bash
-bash customize-omarchy.sh
-```
+## What This Does
 
-This master script will:
-- Walk you through all modifications
-- Ask for confirmation before making changes
-- Create backups of all modified files
-- Report success/failure for each step
-
-### Individual Scripts
-
-You can also run individual scripts:
-
-```bash
-# Just switch the packages
-bash 01-switch-to-zed.sh
-
-# Just update the environment
-bash 02-set-zed-default-editor.sh
-
-# Just update the launcher
-bash 03-update-launch-editor.sh
-
-# Just integrate themes
-bash 04-integrate-zed-themes.sh
-```
-
-## After Installation
-
-**Restart your session** (logout/login) for all changes to take effect.
-
-Or manually run:
-```bash
-export EDITOR=zed
-```
-
-Test the editor:
-```bash
-omarchy-launch-editor
-```
-
-## Theme Integration
-
-After running the customization, Zed will automatically sync with Omarchy's theme system:
-
-- **Automatic theme switching**: When you change your Omarchy theme, Zed updates automatically
-- **Manual theme update**: Run `omarchy-theme-set-zed` to apply the current theme
-- **Supported themes**: All 12 Omarchy themes have Zed configurations:
-  - Catppuccin (Mocha & Latte)
-  - Tokyo Night
-  - Gruvbox
-  - Nord
-  - Rose Pine
-  - Kanagawa
-  - Everforest
-  - Flexoki Light
-  - Matte Black
-  - Osaka Jade
-  - Ristretto
-
-The integration uses the Omarchy hooks system (`~/.config/omarchy/hooks/theme-set`) to trigger theme updates automatically.
-
-## Backup Files
-
-All modifications create backup files:
-- `~/.config/uwsm/default.backup`
-- `/usr/local/bin/omarchy-launch-editor.backup`
-
-You can restore from these if needed.
-
-## Reverting Changes
-
-To revert back to Neovim:
-
-1. Restore backup files:
-   ```bash
-   cp ~/.config/uwsm/default.backup ~/.config/uwsm/default
-   sudo cp /usr/local/bin/omarchy-launch-editor.backup /usr/local/bin/omarchy-launch-editor
-   ```
-
-2. Remove Zed and reinstall Neovim:
-   ```bash
-   sudo pacman -Rns zed
-   yay -S nvim omarchy-nvim
-   ```
-
-3. Restart your session
+- Bullet points of changes
+- Made by this module
 
 ## Requirements
 
-- Vanilla Omarchy installation
-- Internet connection (to download Zed from AUR)
-- Sudo privileges
+- List any requirements
 
 ## Notes
 
-- These scripts are **idempotent** - safe to run multiple times
-- All original files are backed up before modification
-- The scripts will ask for confirmation before destructive operations
-- Zed theme integration uses Omarchy's native hook system for seamless synchronization
-- Theme configurations are stored in `~/.local/share/omarchy-customize/themes-zed/`
+- Important notes
+- Warnings
+- Tips
+```
 
-## Adding Your Own Customizations
+### 6. Add to Main Menu (Optional)
 
-Follow this pattern for additional modifications:
+Edit `customize.sh` to add your module to the interactive menu.
 
-1. Create numbered scripts: `05-your-mod.sh`, `06-another-mod.sh`
-2. Make them executable: `chmod +x 05-your-mod.sh`
-3. Add them to `customize-omarchy.sh` as additional steps
-4. Always backup original files before modification
-5. Use clear echo statements to show progress
+## Library Usage Examples
+
+### Installing Packages
+
+```bash
+source "$CUSTOMIZE_DIR/lib/package-utils.sh"
+
+# Install single package
+install_package "zed"
+
+# Install multiple packages
+install_packages "package1" "package2" "package3"
+
+# Remove package
+remove_package "nvim"
+```
+
+### Theme Integration
+
+```bash
+source "$CUSTOMIZE_DIR/lib/theme-utils.sh"
+
+# Get current Omarchy theme
+theme=$(get_current_theme)
+print_info "Current theme: $theme"
+
+# Add hook to run when theme changes
+install_theme_hook "my-theme-script" "My App Theme Integration"
+
+# Update JSON settings file
+update_json_setting "$HOME/.config/app/settings.json" "theme" "dark-mode"
+```
+
+### User Interaction
+
+```bash
+source "$CUSTOMIZE_DIR/lib/common.sh"
+
+# Ask yes/no questions
+if ask_yes_no "Do you want to continue?"; then
+    print_success "Continuing..."
+else
+    print_warning "Cancelled"
+    exit 0
+fi
+
+# Show headers and messages
+print_header "Installing Application"
+print_info "This will take a moment..."
+print_success "Installation complete!"
+print_error "Something went wrong"
+print_warning "Please review the output"
+```
+
+## Module Best Practices
+
+1. **Always backup** before modifying files
+2. **Be idempotent** - scripts should be safe to run multiple times
+3. **Ask before destructive actions** - use `ask_yes_no`
+4. **Provide clear feedback** - use print functions liberally
+5. **Handle errors gracefully** - check exit codes, provide helpful messages
+6. **Document everything** - include a detailed README
+7. **Use shared libraries** - don't reinvent the wheel
+8. **Test thoroughly** - verify install, configure, and uninstall work
+
+## Examples
+
+### Example: Simple App Install Module
+
+```bash
+#!/bin/bash
+set -e
+
+MODULE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CUSTOMIZE_DIR="$(cd "$MODULE_DIR/../../.." && pwd)"
+
+source "$CUSTOMIZE_DIR/lib/common.sh"
+source "$CUSTOMIZE_DIR/lib/package-utils.sh"
+
+print_header "Installing Docker"
+
+if command_exists docker; then
+    print_info "Docker already installed"
+    exit 0
+fi
+
+install_packages "docker" "docker-compose"
+
+# Enable service
+sudo systemctl enable --now docker.service
+print_success "Docker service enabled"
+
+# Add user to docker group
+if ! groups | grep -q docker; then
+    sudo usermod -aG docker $USER
+    print_success "Added $USER to docker group"
+    print_warning "Log out and back in for group changes to take effect"
+fi
+
+print_success "Docker installation complete!"
+```
+
+### Example: Theme-Aware App Module
+
+```bash
+#!/bin/bash
+set -e
+
+MODULE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CUSTOMIZE_DIR="$(cd "$MODULE_DIR/../../.." && pwd)"
+
+source "$CUSTOMIZE_DIR/lib/common.sh"
+source "$CUSTOMIZE_DIR/lib/theme-utils.sh"
+
+print_header "Integrating MyApp with Omarchy Themes"
+
+# Install theme script
+install_script "$MODULE_DIR/bin/myapp-theme-set"
+
+# Add to theme hook
+install_theme_hook "myapp-theme-set" "MyApp theme integration"
+
+# Apply current theme
+theme=$(get_current_theme)
+if [ -f "$MODULE_DIR/themes/$theme.conf" ]; then
+    cp "$MODULE_DIR/themes/$theme.conf" "$HOME/.config/myapp/theme.conf"
+    print_success "Applied $theme theme"
+fi
+
+print_success "Theme integration complete!"
+```
+
+## Contributing Modules
+
+Have a useful module? Consider:
+1. Testing it thoroughly
+2. Writing clear documentation
+3. Following the structure guidelines
+4. Submitting a pull request
+
+## Requirements
+
+- Omarchy installation
+- Internet connection (for package downloads)
+- `sudo` privileges
+- `bash` 4.0+
+- `jq` (for JSON manipulation)
+
+## Notes
+
+- All scripts create backup files before modifications
+- Modules are independent and can be run individually
+- The framework is designed to be extensible
+- More module categories coming soon (apps, system tweaks, etc.)
 
 ## Support
 
-These are custom scripts, not officially part of Omarchy.
+This is a community customization framework, not officially part of Omarchy.
 
 For Omarchy itself, see: https://omarchy.org
