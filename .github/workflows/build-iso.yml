@@ -5,9 +5,9 @@ on:
   workflow_dispatch:
     inputs:
       branch:
-        description: 'Branch to build from'
+        description: 'Branch to build from (leave empty for current branch)'
         required: false
-        default: 'main'
+        default: ''
 
   # Auto-build on push to specific paths
   push:
@@ -17,7 +17,9 @@ on:
       - '.github/workflows/build-iso.yml'
     branches:
       - main
+      - master
       - 'claude/**'
+      - 'feature/**'
 
   # Auto-build on release
   release:
@@ -31,7 +33,7 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
-        ref: ${{ github.event.inputs.branch || github.ref }}
+        ref: ${{ github.event.inputs.branch || github.ref_name }}
 
     - name: Free up disk space
       run: |
